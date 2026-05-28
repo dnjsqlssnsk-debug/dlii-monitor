@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>디지털리빙인프라 구현 정도 모니터</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f5f2;
+    --bg3: #efefeb;
+    --text: #1a1a18;
+    --text2: #5f5e5a;
+    --text3: #888780;
+    --border: rgba(0,0,0,0.12);
+    --teal: #1D9E75;
+    --blue: #185FA5;
+    --purple: #534AB7;
+    --radius: 10px;
+  }
+
+  body {
+    font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    background: var(--bg3);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .header {
+    margin-bottom: 2.5rem;
+  }
+  .header-badge {
+    display: inline-block;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    text-transform: uppercase;
+    border: 0.5px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 8px;
+    margin-bottom: 12px;
+    background: var(--bg);
+  }
+  .header h1 {
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  .header p {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+
+  /* Card shell */
+  .card {
+    background: var(--bg);
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    border-bottom: 0.5px solid var(--border);
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 8px 16px;
+    font-size: 13px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: var(--text2);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    white-space: nowrap;
+    transition: color .15s;
+    font-family: inherit;
+  }
+  .tab.on {
+    color: var(--text);
+    border-bottom-color: var(--teal);
+    font-weight: 600;
+  }
+  .tab:hover:not(.on) { color: var(--text); }
+
+  /* Panes */
+  .pane { display: none; }
+  .pane.on { display: block; }
+
+  /* Metric cards */
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+  .mc {
+    background: var(--bg2);
+    border-radius: 8px;
+    padding: .9rem 1rem;
+    text-align: center;
+  }
+  .mc-lbl { font-size: 11px; color: var(--text3); margin-bottom: 5px; }
+  .mc-val { font-size: 22px; font-weight: 600; }
+
+  /* Dimension grid */
+  .dim-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 10px;
+  }
+  .dc {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.1rem;
+  }
+  .dc-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+  .dc-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .dc-status { font-size: 11px; color: var(--text3); }
+  .dc-score { font-size: 24px; font-weight: 600; }
+  .bar-track {
+    height: 5px;
+    background: var(--bg2);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+  .bar-fill { height: 100%; border-radius: 3px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+  .tag {
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    background: var(--bg2);
+    color: var(--text2);
+  }
+  .challenge {
+    font-size: 11px;
+    color: var(--text2);
+    border-top: 0.5px solid var(--border);
+    padding-top: 8px;
+  }
+  .challenge-lbl { color: var(--text3); margin-right: 4px; }
+
+  /* Compare view */
+  .comp-legend {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 1.5rem;
+    font-size: 12px;
+    color: var(--text2);
+    flex-wrap: wrap;
+  }
+  .leg-dot {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    display: inline-block;
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+  .comp-section { margin-bottom: 1.4rem; }
+  .comp-dim { font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+  .comp-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+  .comp-lbl { font-size: 11px; color: var(--text2); width: 62px; flex-shrink: 0; }
+  .comp-track {
+    flex: 1;
+    height: 7px;
+    background: var(--bg2);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .comp-fill { height: 100%; border-radius: 4px; }
+  .comp-val { font-size: 12px; font-weight: 600; width: 28px; text-align: right; flex-shrink: 0; }
+
+  /* Footer */
+  .footer {
+    margin-top: 2.5rem;
+    font-size: 12px;
+    color: var(--text3);
+    text-align: center;
+    line-height: 1.8;
+  }
+
+  @media (max-width: 480px) {
+    .metric-grid { grid-template-columns: repeat(3,1fr); }
+    .mc-val { font-size: 17px; }
+    body { padding: 1rem .75rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="header-badge">태재연구재단 · 도시경영팀</div>
+    <h1>디지털리빙인프라 구현 정도 모니터</h1>
+    <p>강소도시 맥락에서 디지털리빙인프라 6개 분야의 현재 및 시나리오별 구현 정도를 비교합니다.<br>수치는 전문가 평가 기반 100점 척도 예시이며, 실제 데이터로 업데이트 가능합니다.</p>
+  </div>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab on" onclick="sw('compare',this)">비교</button>
+      <button class="tab" onclick="sw('now',this)">현재 (2025)</button>
+      <button class="tab" onclick="sw('five',this)">5년 후 (2030)</button>
+      <button class="tab" onclick="sw('ten',this)">10년 후 (2035)</button>
+    </div>
+
+    <!-- 비교 탭 -->
+    <div id="pane-compare" class="pane on">
+      <div class="comp-legend">
+        <span><span class="leg-dot" style="background:#1D9E75"></span>현재 (2025)</span>
+        <span><span class="leg-dot" style="background:#185FA5"></span>5년 후 (2030)</span>
+        <span><span class="leg-dot" style="background:#534AB7"></span>10년 후 (2035)</span>
+      </div>
+      <div id="comp-body"></div>
+    </div>
+
+    <!-- 현재 탭 -->
+    <div id="pane-now" class="pane">
+      <div class="metric-grid">
+        <div class="mc"><div class="mc-lbl">종합 구현 지수</div><div class="mc-val" style="color:#1D9E75">38</div></div>
+        <div class="mc"><div class="mc-lbl">선도 분야</div><div class="mc-val" style="font-size:13px;padding-top:4px">디지털 행정</div></div>
+        <div class="mc"><div class="mc-lbl">핵심 과제</div><div class="mc-val" style="font-size:13px;padding-top:4px">시스템 통합</div></div>
+      </div>
+      <div class="dim-grid" id="grid-now"></div>
+    </div>
+
+    <!-- 5년 후 탭 -->
+    <div id="pane-five" class="pane">
+      <div class="metric-grid">
+        <div class="mc"><div class="mc-lbl">종합 구현 지수</div><div class="mc-val" style="color:#185FA5">62</div></div>
+        <div class="mc"><div class="mc-lbl">선도 분야</div><div class="mc-val" style="font-size:13px;padding-top:4px">디지털 행정</div></div>
+        <div class="mc"><div class="mc-lbl">핵심 과제</div><div class="mc-val" style="font-size:13px;padding-top:4px">데이터 거버넌스</div></div>
+      </div>
+      <div class="dim-grid" id="grid-five"></div>
+    </div>
+
+    <!-- 10년 후 탭 -->
+    <div id="pane-ten" class="pane">
+      <div class="metric-grid">
+        <div class="mc"><div class="mc-lbl">종합 구현 지수</div><div class="mc-val" style="color:#534AB7">82</div></div>
+        <div class="mc"><div class="mc-lbl">선도 분야</div><div class="mc-val" style="font-size:13px;padding-top:4px">디지털 행정</div></div>
+        <div class="mc"><div class="mc-lbl">핵심 과제</div><div class="mc-val" style="font-size:13px;padding-top:4px">디지털 격차</div></div>
+      </div>
+      <div class="dim-grid" id="grid-ten"></div>
+    </div>
+
+  </div><!-- .card -->
+
+  <div class="footer">
+    태재연구재단 도시경영팀 · 미래도시 및 삶의 질 파트<br>
+    데이터 출처: 전문가 평가 기반 예시 (업데이트 예정)
+  </div>
+
+</div><!-- .container -->
+
+<script>
+// ============================================================
+// 데이터 수정 구역 — 여기만 바꾸면 전체 반영됩니다
+// ============================================================
+const DIMS = [
+  { id: 'mobility', name: '디지털 모빌리티',     icon: '🚌' },
+  { id: 'health',   name: '원격 의료·건강',      icon: '🏥' },
+  { id: 'admin',    name: '디지털 행정 서비스',  icon: '🏛' },
+  { id: 'energy',   name: '에너지·환경 관리',    icon: '⚡' },
+  { id: 'edu',      name: '디지털 교육',          icon: '📚' },
+  { id: 'living',   name: '스마트 주거·생활',    icon: '🏘' },
+];
+
+const SC = {
+  now: {
+    label: '현재', color: '#1D9E75',
+    scores:    { mobility:32, health:41, admin:58, energy:28, edu:35, living:30 },
+    status:    { mobility:'초기 구축', health:'부분 도입', admin:'선도 단계', energy:'시범 사업', edu:'도입기', living:'기반 조성' },
+    techs: {
+      mobility: ['통합 교통 앱', '전기차 충전망', '공유 자전거'],
+      health:   ['원격 진료 플랫폼', '건강보험 앱', 'PHR 초기'],
+      admin:    ['정부24', '전자민원', '공공데이터포털'],
+      energy:   ['AMI 스마트미터', '마이크로그리드(시범)', 'ESS 초기'],
+      edu:      ['EBS 온라인 강의', 'AI 교육(시범)', '학습관리시스템'],
+      living:   ['스마트홈 기기', '공동주택 IoT', '생활 앱'],
+    },
+    challenges: {
+      mobility: '부처간 데이터 연계 부재',
+      health:   '개인정보 규제·수가 체계 미비',
+      admin:    '레거시 시스템 통합',
+      energy:   '분산전원 제도 미비',
+      edu:      '교사 디지털 역량 부족',
+      living:   '표준화 부재',
+    }
+  },
+  five: {
+    label: '5년 후', color: '#185FA5',
+    scores:    { mobility:58, health:66, admin:76, energy:63, edu:60, living:55 },
+    status:    { mobility:'성장 단계', health:'확산 단계', admin:'고도화', energy:'전환 단계', edu:'확산기', living:'성숙 단계' },
+    techs: {
+      mobility: ['Level 4 자율주행', 'MaaS 플랫폼', '드론 배송(시범)'],
+      health:   ['AI 진단 보조', '웨어러블 통합', '만성질환 원격관리'],
+      admin:    ['디지털 신원(DID)', 'AI 민원 처리', '실시간 도시 대시보드'],
+      energy:   ['VPP 가상발전소', '탄소중립 모니터링', '스마트그리드 전국화'],
+      edu:      ['개인화 AI 튜터', '메타버스 학습', '마이크로크레덴셜'],
+      living:   ['통합 생활 앱', '스마트빌딩 표준화', '디지털 커뮤니티 허브'],
+    },
+    challenges: {
+      mobility: '보행자 안전 법제화',
+      health:   '공공-민간 플랫폼 경쟁',
+      admin:    '디지털 소외 계층 대응',
+      energy:   '주민 수용성',
+      edu:      '디지털 격차 심화',
+      living:   '사이버 보안',
+    }
+  },
+  ten: {
+    label: '10년 후', color: '#534AB7',
+    scores:    { mobility:85, health:82, admin:89, energy:84, edu:76, living:79 },
+    status:    { mobility:'완전 통합', health:'예방 중심 전환', admin:'자동화 완성', energy:'탄소중립 달성', edu:'초개인화', living:'완전 연결' },
+    techs: {
+      mobility: ['도심항공교통(UAM)', '완전 자율주행', 'C-ITS 전국망'],
+      health:   ['유전체 기반 예방', '디지털 치료제', '로봇 수술 보편화'],
+      admin:    ['AI 정책 설계 보조', '예측적 공공서비스', '제로 페이퍼 행정'],
+      energy:   ['수소에너지 전환', 'P2P 에너지 거래', '탄소 포집 스케일업'],
+      edu:      ['AI 생애주기 학습', '역량 기반 자격체계', '글로벌 디지털 허브'],
+      living:   ['디지털 트윈 도시', 'AI 생활관리 에이전트', '통합 생활 OS'],
+    },
+    challenges: {
+      mobility: '도시간 기술 격차',
+      health:   '의료 AI 윤리·책임',
+      admin:    '알고리즘 민주주의',
+      energy:   '전력망 보안',
+      edu:      '인간 교육의 의미 재정의',
+      living:   'AI 의존성·자율성 균형',
+    }
+  }
+};
+// ============================================================
+// 여기까지 — 아래는 건드리지 않아도 됩니다
+// ============================================================
+
+function sw(id, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.pane').forEach(p => p.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('pane-' + id).classList.add('on');
+}
+
+function renderGrid(sk, gid) {
+  const sc = SC[sk];
+  document.getElementById(gid).innerHTML = DIMS.map(d => {
+    const s = sc.scores[d.id];
+    return `<div class="dc">
+      <div class="dc-head">
+        <div>
+          <div class="dc-name">${d.icon} ${d.name}</div>
+          <div class="dc-status">${sc.status[d.id]}</div>
+        </div>
+        <div class="dc-score" style="color:${sc.color}">${s}</div>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:${s}%;background:${sc.color}"></div></div>
+      <div class="tags">${sc.techs[d.id].map(t => `<span class="tag">${t}</span>`).join('')}</div>
+      <div class="challenge"><span class="challenge-lbl">과제</span>${sc.challenges[d.id]}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderCompare() {
+  document.getElementById('comp-body').innerHTML = DIMS.map(d => `
+    <div class="comp-section">
+      <div class="comp-dim">${d.icon} ${d.name}</div>
+      ${['now','five','ten'].map(sk => `
+      <div class="comp-row">
+        <span class="comp-lbl">${SC[sk].label}</span>
+        <div class="comp-track"><div class="comp-fill" style="width:${SC[sk].scores[d.id]}%;background:${SC[sk].color}"></div></div>
+        <span class="comp-val" style="color:${SC[sk].color}">${SC[sk].scores[d.id]}</span>
+      </div>`).join('')}
+    </div>`).join('');
+}
+
+renderCompare();
+['now','five','ten'].forEach(sk => renderGrid(sk, 'grid-' + sk));
+</script>
+</body>
+</html>
