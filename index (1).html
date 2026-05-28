@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>디지털생활기반인프라 구현 정도 모니터</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f2; --bg3: #efefeb;
+    --text: #1a1a18; --text2: #5f5e5a; --text3: #888780;
+    --border: rgba(0,0,0,0.12);
+    --teal: #1D9E75; --blue: #185FA5; --purple: #534AB7;
+    --radius: 10px;
+  }
+  body { font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; padding: 2rem 1rem; }
+  .container { max-width: 960px; margin: 0 auto; }
+
+  .header { margin-bottom: 2rem; }
+  .header-badge { display: inline-block; font-size: 11px; letter-spacing: 0.07em; color: var(--text3); text-transform: uppercase; border: 0.5px solid var(--border); border-radius: 4px; padding: 3px 8px; margin-bottom: 12px; background: var(--bg); }
+  .header h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .header p { font-size: 13px; color: var(--text2); line-height: 1.7; }
+
+  .card { background: var(--bg); border-radius: var(--radius); border: 0.5px solid var(--border); padding: 1.5rem; margin-bottom: 1.5rem; }
+
+  .overall { display: flex; align-items: center; gap: 1.5rem; background: var(--bg2); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; }
+  .ov-score { font-size: 52px; font-weight: 600; line-height: 1; min-width: 70px; }
+  .ov-right { flex: 1; }
+  .ov-lbl { font-size: 12px; color: var(--text3); margin-bottom: 6px; }
+  .ov-bar-track { height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; border: 0.5px solid var(--border); }
+  .ov-bar-fill { height: 100%; border-radius: 4px; transition: width .3s ease; }
+  .ov-stage { font-size: 12px; color: var(--text2); margin-top: 6px; }
+  .ov-ref { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+  .dim-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 10px; }
+  .dc { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1rem 1.1rem; }
+  .dc-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .dc-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .dc-sub { font-size: 11px; color: var(--text3); }
+  .dc-score-wrap { display: flex; align-items: baseline; gap: 3px; }
+  .dc-score { font-size: 22px; font-weight: 600; }
+  .dc-max { font-size: 11px; color: var(--text3); }
+  .bar-track { height: 5px; background: var(--bg2); border-radius: 3px; overflow: hidden; margin-bottom: 12px; }
+  .bar-fill { height: 100%; border-radius: 3px; transition: width .3s ease; }
+
+  .ind-row { margin-bottom: 10px; }
+  .ind-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; gap: 8px; }
+  .ind-name { font-size: 11px; color: var(--text2); line-height: 1.4; flex: 1; }
+  .ind-val { font-size: 11px; font-weight: 600; min-width: 36px; text-align: right; flex-shrink: 0; }
+  input[type=range] { width: 100%; margin: 0; accent-color: var(--teal); cursor: pointer; }
+
+  .stage-badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 3px; margin-top: 6px; font-weight: 500; }
+
+  .footer { margin-top: 2rem; font-size: 12px; color: var(--text3); text-align: center; line-height: 1.9; }
+
+  @media (max-width: 520px) {
+    .ov-score { font-size: 38px; min-width: 52px; }
+    body { padding: 1rem .75rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="header-badge">태재연구재단 · 도시경영팀</div>
+    <h1>디지털생활기반인프라 구현 정도 모니터</h1>
+    <p>태재재단 FSCL City 프레임워크 기반 6대 서비스 영역의 구현 정도를 시뮬레이션합니다.<br>
+    슬라이더를 조정하면 각 분야 점수와 종합 지수가 실시간으로 계산됩니다.</p>
+  </div>
+
+  <div class="card">
+    <div class="overall">
+      <div class="ov-score" id="ov-score" style="color:#1D9E75">0</div>
+      <div class="ov-right">
+        <div class="ov-lbl">디지털생활기반인프라 종합 구현 지수 / 100</div>
+        <div class="ov-bar-track"><div class="ov-bar-fill" id="ov-bar" style="width:0%;background:#1D9E75"></div></div>
+        <div class="ov-stage" id="ov-stage">슬라이더를 조정하면 점수가 실시간으로 계산됩니다</div>
+        <div class="ov-ref">기준: 도시기능 70% 디지털공공재化 목표 (태재재단 FSCL City)</div>
+      </div>
+    </div>
+
+    <div class="dim-grid" id="dim-grid"></div>
+  </div>
+
+  <div class="footer">
+    태재연구재단 도시경영팀 · 미래도시 및 삶의 질 파트<br>
+    참고문헌: FSCL City by Taejae Research Foundation (2022) · 태재 Research Master Plan (2025)
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// 데이터 수정 구역 — 수치·지표명만 바꾸면 전체 반영됩니다
+// ============================================================
+const DIMS = [
+  {
+    id: 'work', name: '재택근무 시스템', sub: '사무실 출퇴근 → 재택근무·주1회 출근',
+    color: '#1D9E75',
+    inds: [
+      { name: '재택근무 가능 직종·업무 비율',              val: 25, w: 0.40 },
+      { name: '원격 협업 인프라(클라우드·화상회의) 보급률', val: 20, w: 0.35 },
+      { name: '주 1회 이상 재택근무 실행률',               val: 15, w: 0.25 },
+    ]
+  },
+  {
+    id: 'edu', name: '온라인 교육 시스템', sub: '등교·하교 → 맞춤형 재택학습·주1-2회 체험',
+    color: '#1D9E75',
+    inds: [
+      { name: '온라인 학습 플랫폼 시민 이용률',     val: 40, w: 0.40 },
+      { name: '맞춤형·개인화 교육 서비스 전환율',   val: 20, w: 0.35 },
+      { name: '전 연령대 디지털 학습기기 보급률',   val: 35, w: 0.25 },
+    ]
+  },
+  {
+    id: 'health', name: '원격 의료 시스템', sub: '질병치료·외래진료 → 디지털주치의·건강유지',
+    color: '#1D9E75',
+    inds: [
+      { name: '원격진료 서비스 이용 가능 비율',          val: 25, w: 0.40 },
+      { name: '디지털 건강관리(예방·건강유지) 이용률',   val: 15, w: 0.35 },
+      { name: '개인건강기록(PHR) 연동·활용률',           val: 10, w: 0.25 },
+    ]
+  },
+  {
+    id: 'admin', name: '온라인 행정·법률', sub: '민원실 방문 → 디지털 공공서비스 전면화',
+    color: '#1D9E75',
+    inds: [
+      { name: '민원·행정 디지털 처리 비율',        val: 65, w: 0.45 },
+      { name: '온라인 법률·방재 서비스 구축률',    val: 30, w: 0.30 },
+      { name: '디지털 신원(DID) 서비스 이용률',    val: 10, w: 0.25 },
+    ]
+  },
+  {
+    id: 'culture', name: '디지털 문화·여가', sub: '공연장·대규모 시설 → 맞춤형 체험·AR·VR',
+    color: '#1D9E75',
+    inds: [
+      { name: '온라인 문화콘텐츠 정기 이용률',         val: 55, w: 0.45 },
+      { name: 'AR·VR 기반 체험 서비스 보급률',         val:  8, w: 0.30 },
+      { name: '맞춤형 문화 큐레이션 서비스 이용률',    val: 20, w: 0.25 },
+    ]
+  },
+  {
+    id: 'finance', name: '디지털 금융·쇼핑', sub: '은행·상점 방문 → 온라인뱅킹·온라인쇼핑',
+    color: '#1D9E75',
+    inds: [
+      { name: '모바일 금융 서비스 이용률',          val: 70, w: 0.40 },
+      { name: '온라인 쇼핑 소비 비중',              val: 40, w: 0.35 },
+      { name: '지역 내 디지털 결제 인프라 보급률',  val: 55, w: 0.25 },
+    ]
+  },
+];
+// ============================================================
+// 여기까지 — 아래는 건드리지 않아도 됩니다
+// ============================================================
+
+function scoreColor(s) {
+  if (s >= 70) return '#534AB7';
+  if (s >= 45) return '#185FA5';
+  return '#1D9E75';
+}
+function stageName(s) {
+  if (s >= 80) return '완전 구현 (공공재 수준)';
+  if (s >= 60) return '고도화 단계';
+  if (s >= 40) return '확산 단계';
+  if (s >= 20) return '도입기';
+  return '기반 조성 전';
+}
+function dimScore(dim) {
+  return Math.round(dim.inds.reduce((a, i) => a + i.val * i.w, 0));
+}
+function overallScore() {
+  return Math.round(DIMS.reduce((a, d) => a + dimScore(d), 0) / DIMS.length);
+}
+function updateOverall() {
+  const s = overallScore(), c = scoreColor(s);
+  document.getElementById('ov-score').textContent = s;
+  document.getElementById('ov-score').style.color = c;
+  document.getElementById('ov-bar').style.width = s + '%';
+  document.getElementById('ov-bar').style.background = c;
+  const pct = Math.round(s * 0.7);
+  document.getElementById('ov-stage').textContent =
+    '현재 단계: ' + stageName(s) + ' — 도시기능 디지털화 ' + pct + '% 수준';
+}
+function updateDim(dim) {
+  const s = dimScore(dim), c = scoreColor(s);
+  const sc = document.getElementById('ds-' + dim.id);
+  if (!sc) return;
+  sc.textContent = s; sc.style.color = c;
+  document.getElementById('db-' + dim.id).style.width = s + '%';
+  document.getElementById('db-' + dim.id).style.background = c;
+  const b = document.getElementById('dbadge-' + dim.id);
+  const bg = c === '#534AB7' ? '#EEEDFE' : c === '#185FA5' ? '#E6F1FB' : '#E1F5EE';
+  b.textContent = stageName(s); b.style.background = bg; b.style.color = c;
+  updateOverall();
+}
+function buildGrid() {
+  document.getElementById('dim-grid').innerHTML = DIMS.map(dim => {
+    const s = dimScore(dim), c = scoreColor(s);
+    const indsHtml = dim.inds.map((ind, i) => `
+      <div class="ind-row">
+        <div class="ind-top">
+          <span class="ind-name">${ind.name}</span>
+          <span class="ind-val" id="iv-${dim.id}-${i}">${ind.val}%</span>
+        </div>
+        <input type="range" min="0" max="100" step="1" value="${ind.val}"
+          oninput="DIMS.find(d=>d.id==='${dim.id}').inds[${i}].val=+this.value;
+                   document.getElementById('iv-${dim.id}-${i}').textContent=this.value+'%';
+                   updateDim(DIMS.find(d=>d.id==='${dim.id}'))">
+      </div>`).join('');
+    return `<div class="dc">
+      <div class="dc-head">
+        <div>
+          <div class="dc-name">${dim.name}</div>
+          <div class="dc-sub">${dim.sub}</div>
+        </div>
+        <div class="dc-score-wrap">
+          <span class="dc-score" id="ds-${dim.id}" style="color:${c}">${s}</span>
+          <span class="dc-max">/100</span>
+        </div>
+      </div>
+      <div class="bar-track"><div class="bar-fill" id="db-${dim.id}" style="width:${s}%;background:${c}"></div></div>
+      ${indsHtml}
+      <span class="stage-badge" id="dbadge-${dim.id}"
+        style="background:#E1F5EE;color:#1D9E75">${stageName(s)}</span>
+    </div>`;
+  }).join('');
+  updateOverall();
+}
+
+buildGrid();
+</script>
+</body>
+</html>
